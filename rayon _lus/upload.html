@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Video</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .progress { width: 100%; background: #eee; margin-top: 10px; }
+    .progress-bar { height: 20px; width: 0%; background: green; }
+    .loading { color: blue; }
+    .error { color: red; }
+    .success { color: green; }
+    pre { background: #f4f4f4; padding: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Upload Video</h2>
+
+<form id="uploadForm">
+  <input type="number" name="owner_id" placeholder="Owner ID" required><br><br>
+
+  <input type="text" name="title" placeholder="Title" required><br><br>
+
+  <textarea name="description" placeholder="Description"></textarea><br><br>
+
+  <input type="number" name="category" placeholder="Category"><br><br>
+
+  <input type="number" name="price" placeholder="Price"><br><br>
+
+  <label>Video File:</label><br>
+  <input type="file" name="video_file" accept="video/*" required><br><br>
+
+  <label>Thumbnail:</label><br>
+  <input type="file" name="thumbnail_file" accept="image/*"><br><br>
+
+  <button type="submit">Upload</button>
+</form>
+
+<!-- STATUS -->
+<p id="status"></p>
+
+<!-- PROGRESS -->
+<div class="progress">
+  <div id="progressBar" class="progress-bar"></div>
+</div>
+
+<!-- RESULT -->
+<h3>Response</h3>
+<pre id="response"></pre>
+
+<!-- PREVIEW -->
+<h3>Preview</h3>
+<video id="videoPreview" width="400" controls style="display:none;"></video><br><br>
+<img id="thumbPreview" width="200" style="display:none;" />
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const status = document.getElementById('status');
+  const progressBar = document.getElementById('progressBar');
+  const responseBox = document.getElementById('response');
+  const videoPreview = document.getElementById('videoPreview');
+  const thumbPreview = document.getElementById('thumbPreview');
+
+  const formData = new FormData(this);
+
+  const xhr = new XMLHttpRequest();
+
+  xhr.open("POST", "http://localhost:5001/api/videos/add", true);
+
+  // 🚀 Upload progress
+  xhr.upload.onprogress = function (e) {
+    if (e.lengthComputable) {
+      const percent = (e.loaded / e.total) * 100;
+      progressBar.style.width = percent + "%";
+      status.innerHTML = "Uploading: " + percent.toFixed(2) + "%";
+      status.className = "loading";
+    }
+  };
+
+  // ✅ Success
+  xhr.onload = function () {
+    try {
+      const data = JSON.parse(xhr.responseText);
+
+      responseBox.textContent = JSON.stringify(data, null, 2);
+
+      if (data.success) {
+        status.innerHTML = "Upload successful (processing HLS...)";
+        status.className = "success";
+
+        // show video
+        if (data.data.video_url) {
+          videoPreview.src = data.data.video_url;
+          videoPreview.style.display = "block";
+        }
+
+        // show thumbnail
+        if (data.data.thumbnail_url) {
+          thumbPreview.src = data.data.thumbnail_url;
+          thumbPreview.style.display = "block";
+        }
+
+      } else {
+        status.innerHTML = "Upload failed: " + data.message;
+        status.className = "error";
+      }
+
+    } catch (err) {
+      status.innerHTML = "Invalid server response";
+      status.className = "error";
+    }
+  };
+
+  // ❌ Error
+  xhr.onerror = function () {
+    status.innerHTML = "Network error";
+    status.className = "error";
+  };
+
+  xhr.send(formData);
+});
+</script>
+
+</body>
+</html>
+

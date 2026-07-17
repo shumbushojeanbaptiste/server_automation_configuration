@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Video - Rayon Plus</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .mode-selector {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .mode-selector label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .mode-selector input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+
+    .mode-selector .badge {
+      background: #667eea;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-left: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .form-group label .required {
+      color: #e74c3c;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e1e5ea;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .file-upload-area {
+      border: 2px dashed #e1e5ea;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .file-upload-area:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    .file-upload-area.dragover {
+      border-color: #667eea;
+      background: #f0f2ff;
+    }
+
+    .file-upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-upload-area .icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .file-upload-area .text {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .file-upload-area .text strong {
+      color: #667eea;
+    }
+
+    .file-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .file-info.active {
+      display: block;
+    }
+
+    .file-info .file-name {
+      font-weight: 600;
+      color: #333;
+      word-break: break-all;
+    }
+
+    .file-info .file-details {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #219a52;
+    }
+
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #7f8c8d;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .status.info {
+      display: block;
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .status.success {
+      display: block;
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      display: block;
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .status.warning {
+      display: block;
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+    }
+
+    .progress-container {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      width: 0%;
+      transition: width 0.3s;
+      border-radius: 10px;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .progress-text .percentage {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .chunk-info {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .response-section {
+      margin-top: 25px;
+      display: none;
+    }
+
+    .response-section.active {
+      display: block;
+    }
+
+    .response-section h3 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .response-section pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 13px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+    }
+
+    .preview-section {
+      margin-top: 25px;
+      display: none;
+    }
+
+    .preview-section.active {
+      display: block;
+    }
+
+    .preview-section video,
+    .preview-section img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .preview-section video {
+      max-height: 400px;
+    }
+
+    .preview-section img {
+      max-height: 200px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+
+      .mode-selector {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .controls .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>🎬 Upload Video</h2>
+    <p class="subtitle">Supports up to 10GB • Optimized for speed • Chunked upload for all files</p>
+
+    <!-- Upload Mode Selector -->
+    <div class="mode-selector">
+      <label>
+        <input type="radio" name="uploadMode" value="chunked" checked>
+        Chunked Upload
+        <span class="badge">All files</span>
+      </label>
+      <span style="font-size:12px;color:#999;margin-left:auto;">
+        ⚡ 20MB chunks • Fast upload
+      </span>
+    </div>
+
+    <!-- Upload Form -->
+    <form id="uploadForm">
+      <div class="form-group">
+        <label>Owner ID <span class="required">*</span></label>
+        <input type="number" name="owner_id" placeholder="Enter owner ID" required>
+      </div>
+
+      <div class="form-group">
+        <label>Title <span class="required">*</span></label>
+        <input type="text" name="title" placeholder="Enter video title" required>
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" placeholder="Enter video description"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Category</label>
+        <input type="number" name="category" placeholder="Enter category ID">
+      </div>
+
+      <div class="form-group">
+        <label>Price</label>
+        <input type="number" name="price" placeholder="Enter price" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label>Video File <span class="required">*</span></label>
+        <div class="file-upload-area" id="fileDropArea">
+          <div class="icon">📹</div>
+          <div class="text">
+            <strong>Click to browse</strong> or drag and drop<br>
+            <span style="font-size:12px;color:#999;">MP4, AVI, MOV, WebM, up to 10GB</span>
+          </div>
+          <input type="file" name="video_file" accept="video/*" required id="videoFile">
+        </div>
+        <div class="file-info" id="fileInfo">
+          <div class="file-name" id="fileName"></div>
+          <div class="file-details">
+            <span id="fileSize"></span> • <span id="fileType"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Thumbnail</label>
+        <div class="file-upload-area" style="padding:15px;border-style:dashed;">
+          <div class="text" style="font-size:13px;">
+            <strong>Click to browse</strong> for thumbnail image
+          </div>
+          <input type="file" name="thumbnail_file" accept="image/*" id="thumbnailFile">
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="submit" class="btn btn-primary" id="uploadBtn">
+          📤 Upload Video
+        </button>
+        <button type="button" class="btn btn-danger" id="cancelBtn" style="display:none;">
+          ❌ Cancel
+        </button>
+      </div>
+    </form>
+
+    <!-- Status -->
+    <div id="status" class="status"></div>
+
+    <!-- Progress -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <div class="progress-text">
+        <span id="progressLabel">0%</span>
+        <span id="progressDetails">0 / 0 MB</span>
+      </div>
+      <div class="chunk-info" id="chunkInfo"></div>
+    </div>
+
+    <!-- Response -->
+    <div class="response-section" id="responseSection">
+      <h3>📋 Server Response</h3>
+      <pre id="response"></pre>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-section" id="previewSection">
+      <h3>🎥 Video Preview</h3>
+      <video id="videoPreview" controls style="display:none;"></video>
+      <img id="thumbPreview" style="display:none;" />
+    </div>
+  </div>
+
+  <script>
+// ============================================================
+// YOUTUBE-LIKE OPTIMIZED UPLOADER
+// ============================================================
+
+const API_URL = 'https://rayon.maafricapay.com/api/upload/chunked';
+
+class VideoUploader {
+  constructor() {
+    // ✅ Auto-detect optimal settings
+    this.connection = navigator.connection || { downlink: 20 };
+    this.optimalChunkSize = this.calculateOptimalChunkSize();
+    
+    this.chunkSize = this.optimalChunkSize;
+    this.concurrentChunks = this.calculateConcurrentChunks();
+    this.maxFileSize = 10 * 1024 * 1024 * 1024;
+    this.apiUrl = API_URL;
+
+    this.file = null;
+    this.uploadId = null;
+    this.currentChunk = 0;
+    this.totalChunks = 0;
+    this.isCancelled = false;
+    this.isUploading = false;
+    this.xhr = null;
+    this.finalResponse = null;
+    this.uploadStartTime = null;
+    this.speedSamples = [];
+    this.avgSpeed = 0;
+
+    // DOM Elements (keep existing)
+    this.elements = {
+      // ... your existing elements
+    };
+
+    this.init();
+  }
+
+  calculateOptimalChunkSize() {
+    const speed = this.connection.downlink || 20; // Mbps
+    console.log(`📊 Detected speed: ${speed} Mbps`);
+    
+    if (speed > 50) return 50 * 1024 * 1024;  // 50MB
+    if (speed > 20) return 30 * 1024 * 1024;  // 30MB
+    if (speed > 10) return 20 * 1024 * 1024;  // 20MB
+    return 10 * 1024 * 1024;                  // 10MB
+  }
+
+  calculateConcurrentChunks() {
+    const speed = this.connection.downlink || 20;
+    if (speed > 50) return 5;
+    if (speed > 20) return 3;
+    return 2;
+  }
+
+  // ✅ Adaptive chunk size based on speed
+  updateChunkSize(currentSpeed) {
+    const speedMBps = currentSpeed / (1024 * 1024);
+    if (speedMBps > 10) {
+      this.chunkSize = Math.min(this.chunkSize * 1.5, 50 * 1024 * 1024);
+    } else if (speedMBps < 2) {
+      this.chunkSize = Math.max(this.chunkSize * 0.7, 5 * 1024 * 1024);
+    }
+  }
+
+  // ✅ Parallel chunk upload (YouTube-style)
+  async uploadChunksParallel() {
+    try {
+      this.uploadStartTime = Date.now();
+      const totalChunks = this.totalChunks;
+      let completed = 0;
+      
+      // Process chunks in parallel batches
+      while (completed < totalChunks && !this.isCancelled) {
+        const batch = [];
+        const batchSize = Math.min(this.concurrentChunks, totalChunks - completed);
+        
+        for (let i = 0; i < batchSize; i++) {
+          const chunkIndex = completed + i;
+          batch.push(this.uploadChunk(chunkIndex));
+        }
+        
+        // Wait for all chunks in this batch
+        const results = await Promise.all(batch);
+        completed += batchSize;
+        
+        // Update progress
+        const percent = (completed / totalChunks * 100);
+        this.elements.chunkInfo.textContent = `Chunks: ${completed}/${totalChunks} (${this.concurrentChunks} parallel)`;
+        this.elements.progressLabel.textContent = `${percent.toFixed(1)}%`;
+        
+        // ✅ Adaptive: Increase concurrency if fast
+        const elapsed = (Date.now() - this.uploadStartTime) / 1000;
+        const speed = (completed * this.chunkSize) / elapsed;
+        this.updateConcurrency(speed);
+      }
+      
+      if (!this.isCancelled) {
+        const elapsed = ((Date.now() - this.uploadStartTime) / 1000).toFixed(1);
+        const avgSpeed = (this.file.size / (Date.now() - this.uploadStartTime) * 1000);
+        this.showStatus(`✅ Upload complete in ${elapsed}s (${this.formatBytes(avgSpeed)}/s)!`, 'success');
+      }
+      
+    } catch (error) {
+      if (!this.isCancelled) {
+        this.showStatus(`Upload failed: ${error.message}`, 'error');
+      }
+      this.resetUI();
+    }
+  }
+
+  updateConcurrency(currentSpeed) {
+    // Increase concurrency if speed is high
+    const speedMBps = currentSpeed / (1024 * 1024);
+    if (speedMBps > 20 && this.concurrentChunks < 6) {
+      this.concurrentChunks = Math.min(this.concurrentChunks + 1, 6);
+    } else if (speedMBps < 5 && this.concurrentChunks > 1) {
+      this.concurrentChunks = Math.max(this.concurrentChunks - 1, 1);
+    }
+  }
+
+  // ✅ Upload chunk with retry logic (YouTube-style)
+  uploadChunk(chunkIndex, retryCount = 0) {
+    return new Promise((resolve, reject) => {
+      const maxRetries = 3;
+      const start = chunkIndex * this.chunkSize;
+      const end = Math.min(start + this.chunkSize, this.file.size);
+      const chunk = this.file.slice(start, end);
+
+      const formData = new FormData();
+      formData.append('video_file', chunk);
+      
+      // ... (add form fields as before)
+      
+      this.xhr = new XMLHttpRequest();
+      this.xhr.open('POST', this.apiUrl, true);
+      this.xhr.timeout = 300000;
+
+      // Headers
+      this.xhr.setRequestHeader('X-Upload-Id', this.uploadId);
+      this.xhr.setRequestHeader('X-Chunk-Index', chunkIndex);
+      this.xhr.setRequestHeader('X-Total-Chunks', this.totalChunks);
+      this.xhr.setRequestHeader('X-Original-Name', encodeURIComponent(this.file.name));
+
+      let lastLoaded = 0;
+      let lastTime = Date.now();
+
+      this.xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const totalProgress = (chunkIndex * this.chunkSize) + e.loaded;
+          this.updateProgress(totalProgress, this.file.size);
+          
+          // Calculate speed with smoothing
+          const now = Date.now();
+          const timeDiff = (now - lastTime) / 1000;
+          const bytesDiff = e.loaded - lastLoaded;
+          
+          if (timeDiff > 0.5 && bytesDiff > 0) {
+            const speed = bytesDiff / timeDiff;
+            this.speedSamples.push(speed);
+            if (this.speedSamples.length > 10) this.speedSamples.shift();
+            this.avgSpeed = this.speedSamples.reduce((a, b) => a + b, 0) / this.speedSamples.length;
+            
+            // Update chunk size adaptively
+            this.updateChunkSize(this.avgSpeed);
+            
+            const remainingBytes = this.file.size - totalProgress;
+            const eta = remainingBytes / this.avgSpeed;
+            
+            this.elements.progressDetails.textContent = 
+              `⚡ ${this.formatBytes(this.avgSpeed)}/s • ${this.formatBytes(totalProgress)} / ${this.formatBytes(this.file.size)} • ${eta > 0 ? 'ETA: ' + this.formatTime(eta) : 'Almost done'}`;
+            
+            lastLoaded = e.loaded;
+            lastTime = now;
+          }
+        }
+      };
+
+      this.xhr.onload = () => {
+        try {
+          const data = JSON.parse(this.xhr.responseText);
+          if (data.success) {
+            resolve(data);
+          } else {
+            reject(new Error(data.message || 'Chunk failed'));
+          }
+        } catch (e) {
+          reject(new Error('Invalid response'));
+        }
+      };
+
+      this.xhr.onerror = () => {
+        // ✅ Retry on error (YouTube-style)
+        if (retryCount < maxRetries) {
+          console.log(`🔄 Retrying chunk ${chunkIndex + 1} (attempt ${retryCount + 2})`);
+          setTimeout(() => {
+            this.uploadChunk(chunkIndex, retryCount + 1)
+              .then(resolve)
+              .catch(reject);
+          }, 2000 * (retryCount + 1));
+        } else {
+          reject(new Error(`Chunk ${chunkIndex + 1} failed after ${maxRetries} retries`));
+        }
+      };
+
+      this.xhr.ontimeout = () => {
+        if (retryCount < maxRetries) {
+          console.log(`🔄 Timeout retry for chunk ${chunkIndex + 1}`);
+          setTimeout(() => {
+            this.uploadChunk(chunkIndex, retryCount + 1)
+              .then(resolve)
+              .catch(reject);
+          }, 3000 * (retryCount + 1));
+        } else {
+          reject(new Error(`Chunk ${chunkIndex + 1} timeout`));
+        }
+      };
+
+      this.xhr.send(formData);
+    });
+  }
+
+  // ✅ Start upload with optimized settings
+  startUpload() {
+    // ... validation code
+    
+    // Use parallel upload for speed
+    this.uploadChunksParallel();
+  }
+
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  formatTime(seconds) {
+    if (seconds < 60) return Math.round(seconds) + 's';
+    if (seconds < 3600) return Math.round(seconds / 60) + 'm ' + Math.round(seconds % 60) + 's';
+    return Math.round(seconds / 3600) + 'h ' + Math.round((seconds % 3600) / 60) + 'm';
+  }
+}
+</script>
+
+</body>
+</html>
