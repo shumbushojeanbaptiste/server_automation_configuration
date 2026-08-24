@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OleePlay Radio Player</title>
+    <style>
+        /* Your styles */
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .player-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn {
+            background: #4f46e5;
+            border: none;
+            color: white;
+            padding: 12px 36px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #4338ca;
+        }
+        #status {
+            color: rgba(255,255,255,0.8);
+            margin: 10px 0;
+        }
+        #error {
+            color: #f87171;
+            margin: 10px 0;
+            display: none;
+        }
+        .info {
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <h1 style="color:white;">📻 OleePlay Radio</h1>
+        
+        <video id="video" controls playsinline style="width:100%; background:#000; border-radius:12px;"></video>
+        
+        <div id="status">Ready to play</div>
+        <div id="error"></div>
+        
+        <button class="btn" id="playBtn">▶ Play</button>
+        
+        <div class="info">Stream: radio1</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
+    <script>
+        (function() {
+            const video = document.getElementById('video');
+            const playBtn = document.getElementById('playBtn');
+            const statusEl = document.getElementById('status');
+            const errorEl = document.getElementById('error');
+
+            // Try multiple URL patterns
+            const urls = [
+                'https://live.oleeplay.com/hls/radio1/stream.m3u8',
+                'https://live.oleeplay.com/hls/radio1/index.m3u8',
+                'https://live.oleeplay.com/hls/radio1.m3u8'
+            ];
+
+            let currentUrlIndex = 0;
+            let hls = null;
+            let isPlaying = false;
+
+            function setStatus(msg) {
+                statusEl.textContent = msg;
+            }
+
+            function setError(msg) {
+                errorEl.textContent = '❌ ' + msg;
+                errorEl.style.display = 'block';
+                setStatus('Error');
+            }
+
+            function hideError() {
+                errorEl.style.display = 'none';
+            }
+
+            function initPlayer() {
+                const url = urls[currentUrlIndex];
+                setStatus('Connecting to ' + url);
+
+                // Check if HLS is supported
+                if (!Hls.isSupported()) {
+                    // Try native HLS
+                    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = url;
+                        video.addEventListener('loadedmetadata', function() {
+                            hideError();
+                            setStatus('Ready');
+                        });
+                        return;
+                    }
+                    setError('HLS not supported in this browser');
+                    return;
+                }
+
+                // Clean up old HLS instance
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
+
+                try {
+                    hls = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        maxBufferLength: 30,
+                    });
+
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        hideError();
+                        setStatus('Connected - Press play');
+                        currentUrlIndex = 0; // Reset on success
+                    });
+
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        if (data.fatal) {
+                            console.error('HLS Error:', data);
+                            
+                            // Try next URL
+                            if (currentUrlIndex < urls.length - 1) {
+                                currentUrlIndex++;
+                                setStatus('Trying alternative URL...');
+                                setTimeout(initPlayer, 2000);
+                            } else {
+                                setError('All stream URLs failed. Please check the stream.');
+                                setStatus('Failed');
+                            }
+                        }
+                    });
+
+                } catch (e) {
+                    setError('Failed to initialize player: ' + e.message);
+                }
+            }
+
+            // Toggle play
+            function togglePlay() {
+                if (isPlaying) {
+                    video.pause();
+                    playBtn.textContent = '▶ Play';
+                    isPlaying = false;
+                    setStatus('Paused');
+                } else {
+                    video.play().then(() => {
+                        playBtn.textContent = '⏹ Stop';
+                        isPlaying = true;
+                        setStatus('Playing');
+                        hideError();
+                    }).catch(function(e) {
+                        setError('Cannot play: ' + e.message);
+                        // Try reloading
+                        if (hls) {
+                            hls.startLoad();
+                        }
+                    });
+                }
+            }
+
+            // Play button
+            playBtn.addEventListener('click', togglePlay);
+
+            // Init on load
+            initPlayer();
+
+            // Cleanup
+            window.addEventListener('beforeunload', function() {
+                if (hls) {
+                    hls.destroy();
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>
